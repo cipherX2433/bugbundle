@@ -14,7 +14,7 @@
   - **License & Runtime:** MIT, Node.js `>=22.0.0`, `npm`.
 - **Completed Artifacts:**
   - `src/` — `cli`, `collectors`, `config`, `core`, `errors` (`EXIT_CODES`), `export`, `report`, `review`, `security`, `types`
-  - `tests/` — 22 Vitest test files (129 tests)
+  - `tests/` — 23 Vitest test files (137 tests, including security regression suite)
   - `eslint.config.mjs`, `.prettierrc.json`, `.prettierignore`, `.github/workflows/ci.yml` (Ubuntu/Windows/macOS across Node `22`, `24`, `26`)
   - `README.md` & `CONTRIBUTING.md` — Grounded in actual CLI commands, flags, exit codes, Zod config schema, and security boundaries
 
@@ -33,7 +33,7 @@
 - `npm run lint`: Passed
 - `npm run typecheck`: Passed
 - `npm run build`: Passed
-- `npm test`: 22 test files passed, 129 tests passed
+- `npm test`: 23 test files passed, 137 tests passed
 - `npm audit` / `npm audit --omit=dev`: 0 vulnerabilities
 - `npm pack --dry-run`: Verified clean tarball (`dist/`, `LICENSE`, `README.md`, `package.json`)
 

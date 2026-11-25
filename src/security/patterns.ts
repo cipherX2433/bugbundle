@@ -125,9 +125,10 @@ export const DEFAULT_SECRET_RULES: readonly SecretRule[] = [
     name: 'API Key or Auth Token Assignment',
     category: 'api_key',
     severity: 'high',
-    description: 'Detects explicit api_key, client_secret, and access/auth token assignments.',
+    description:
+      'Detects explicit api_key, api_secret, client_secret, and access/auth token assignments.',
     pattern:
-      /(?:\b(?:api[_-]?key|apikey|x-api-key|client[_-]?secret|secret[_-]?key|access[_-]?token|auth[_-]?token|refresh[_-]?token)\b['"]?\s*[:=]\s*['"]?)([^\s'"`,;}{[\]\r\n]{8,})/gi,
+      /(?:\b(?:[A-Za-z0-9]+_)*(?:api[_-]?key|apikey|x-api-key|api[_-]?secret|client[_-]?secret|secret[_-]?key|access[_-]?token|auth[_-]?token|refresh[_-]?token)\b['"]?\s*[:=]\s*['"]?)([^\s'"`,;}{[\]\r\n]{6,})/gi,
     secretGroup: 1,
   },
   {
@@ -135,9 +136,10 @@ export const DEFAULT_SECRET_RULES: readonly SecretRule[] = [
     name: 'Password Assignment',
     category: 'password',
     severity: 'high',
-    description: 'Detects explicit password/passwd/pwd configuration or connection assignments.',
+    description:
+      'Detects explicit standalone or prefixed password/passwd/pwd configuration or connection assignments.',
     pattern:
-      /(?:\b(?:password|passwd|pwd|db_pass|db_password)\b['"]?\s*[:=]\s*)(?:"([^"\r\n]{4,})"|'([^'\r\n]{4,})'|([^\s'"`,;}{[\]\r\n]{4,}))/gi,
+      /(?:\b(?:[A-Za-z0-9]+_)*(?:password|passwd|pwd|db_pass|db_password)\b['"]?\s*[:=]\s*)(?:"([^"\r\n]{4,})"|'([^'\r\n]{4,})'|([^\s'"`,;}{[\]\r\n]{4,}))/gi,
     secretGroup: 1,
   },
 ];

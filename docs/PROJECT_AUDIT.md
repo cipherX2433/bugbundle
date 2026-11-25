@@ -339,3 +339,11 @@ CLI (Commander: collect)
    - **Step 4.3: Implement `bugbundle inspect`:** Display full sanitized Markdown or structured preview in terminal without writing files.
    - **Step 4.4: User Review Gate & Exporter (`src/review/`, `src/export/`):** Interactive confirmation prompt, non-interactive refusal without explicit approval, and safe writing to `./bugbundle-report.md` with existing-file collision warnings.
 3. **Configure Linter/Formatter (`DEC-011`):** Set up Biome or ESLint to enforce automated formatting and code style across the repository.
+
+---
+
+## 12. Post-v0.1.0 Security Hardening Addendum (`password-assignment` & `generic-api-key-assignment`)
+
+- **Issue:** `password-assignment` previously used `\b(?:password|passwd|pwd|db_pass|db_password)\b`, which missed underscore-prefixed environment variable names (`APP_PASSWORD=`, `USER_PASSWORD=`, `FAKE_PASSWORD=`) because `_` is a regex word character. Similarly, `generic-api-key-assignment` missed `API_SECRET` and underscore-prefixed keys.
+- **Fix:** Updated `src/security/patterns.ts` to allow `(?:[A-Za-z0-9]+_)*` prefixes before the target key names while keeping trailing word-boundary + `[:=]` checks so unrelated identifiers like `PASSWORD_POLICY` do not match.
+- **Verification:** Added `tests/security/regression.test.ts` covering standalone and prefixed passwords, `API_SECRET=example`, database URIs, GitHub/Bearer/JWT tokens, nested objects/arrays, circular reference rejection, prototype-pollution safety, metadata privacy, false positives, and fail-closed `PrivacyValidator` behavior.
