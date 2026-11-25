@@ -306,8 +306,25 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
   program
     .command('inspect')
     .description('Collect and preview sanitized diagnostics locally without writing a report file')
-    .action(async () => {
+    .option(
+      '--include <collectors>',
+      'Comma-separated collectors to include (system, runtimes, dependencies)',
+    )
+    .option(
+      '--exclude <collectors>',
+      'Comma-separated collectors to exclude (system, runtimes, dependencies)',
+    )
+    .action(async (cmdOptions: { include?: string; exclude?: string }) => {
       const targetCwd = options.cwd ?? process.cwd();
+      const cliInclude =
+        cmdOptions.include !== undefined
+          ? parseCollectorList(cmdOptions.include, 'include')
+          : undefined;
+      const cliExclude =
+        cmdOptions.exclude !== undefined
+          ? parseCollectorList(cmdOptions.exclude, 'exclude')
+          : undefined;
+
       writeLine(io.stdout, `${chalk.bold('bugbundle inspect')} ${chalk.dim(`(v${version})`)}`);
       writeLine(io.stdout, chalk.dim('Running local diagnostic collection and security checks...'));
 
@@ -316,6 +333,8 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
         collectors,
         version,
         securityPipeline: options.securityPipeline,
+        cliInclude,
+        cliExclude,
       });
 
       const reportInput = createReportInputFromPipeline(secured, {

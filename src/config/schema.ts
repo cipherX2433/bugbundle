@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ConfigValidationError } from '../errors/index.js';
+import { validateExportDestination } from '../export/report-exporter.js';
 
 export const CONFIG_FILENAME = 'bugbundle.config.json';
 export const DEFAULT_REPORT_FILENAME = 'bugbundle-report.md';
@@ -13,19 +14,17 @@ const SafeRelativeFilenameSchema = z
   .string()
   .trim()
   .min(1, 'Report filename must not be empty.')
-  .max(128, 'Report filename is too long.')
-  .refine(
-    (value) => !value.startsWith('/') && !value.startsWith('\\') && !/^[A-Za-z]:/.test(value),
-    'Report filename must be a relative filename, not an absolute path.',
-  )
-  .refine(
-    (value) => !value.includes('..') && !value.includes('/') && !value.includes('\\'),
-    'Report filename must not contain path separators or traversal segments.',
-  )
-  .refine(
-    (value) => !/^\.env/i.test(value) && !/\.env$/i.test(value),
-    'Report filename must not target .env files.',
-  );
+  .max(256, 'Report filename is too long.')
+  .superRefine((value, ctx) => {
+    try {
+      validateExportDestination(value);
+    } catch (error: unknown) {
+      ctx.addIssue({
+        code: 'custom',
+        message: error instanceof Error ? error.message : 'Invalid report filename.',
+      });
+    }
+  });
 
 export const ReportPreferencesSchema = z
   .object({

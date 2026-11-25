@@ -11,21 +11,35 @@ permissions:
 
 jobs:
   verify:
-    name: Verify (Node ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+    name: Verify (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24, 26]
+        include:
+          - os: ubuntu-latest
+            node-version: 22
+          - os: ubuntu-latest
+            node-version: 24
+          - os: ubuntu-latest
+            node-version: 26
+          - os: windows-latest
+            node-version: 22
+          - os: windows-latest
+            node-version: 26
+          - os: macos-latest
+            node-version: 22
+          - os: macos-latest
+            node-version: 26
 
     steps:
       # actions/checkout v4.2.2
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      # actions/setup-node v4.1.0
+      # actions/setup-node v4
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@39370e3970a6c05044800ad12f3067bab3b289d0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -42,8 +56,8 @@ jobs:
       - name: Run TypeScript typecheck
         run: npm run typecheck
 
-      - name: Run test suite
-        run: npm test
-
       - name: Build distribution
         run: npm run build
+
+      - name: Run test suite
+        run: npm test

@@ -115,24 +115,29 @@ describe('BugbundleConfig schema', () => {
     ).toThrow(ConfigValidationError);
   });
 
-  it('rejects path traversal, absolute paths, and .env targets in report.filename', () => {
-    expect(() =>
-      validateConfig({
-        report: { filename: '../escape.md' },
-      }),
-    ).toThrow(ConfigValidationError);
+  it('accepts safe relative subdirectory paths and rejects unsafe targets in report.filename', () => {
+    const withSubdir = validateConfig({
+      report: { filename: 'reports/custom-report.md' },
+    });
+    expect(withSubdir.report.filename).toBe('reports/custom-report.md');
 
-    expect(() =>
-      validateConfig({
-        report: { filename: '/tmp/report.md' },
-      }),
-    ).toThrow(ConfigValidationError);
-
-    expect(() =>
-      validateConfig({
-        report: { filename: '.env.local' },
-      }),
-    ).toThrow(ConfigValidationError);
+    for (const unsafe of [
+      '../escape.md',
+      '/tmp/report.md',
+      'C:\\report.md',
+      '.env',
+      '.env.local',
+      '.npmrc',
+      '.ssh/id_rsa',
+      'node_modules/report.md',
+      '.git/report.md',
+    ]) {
+      expect(() =>
+        validateConfig({
+          report: { filename: unsafe },
+        }),
+      ).toThrow(ConfigValidationError);
+    }
   });
 
   it('rejects overlapping enabled and excluded collectors', () => {

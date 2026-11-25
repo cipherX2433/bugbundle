@@ -91,7 +91,18 @@ describe('exportReport', () => {
   it('rejects path traversal, absolute paths, and restricted filenames', async () => {
     const dir = makeWorkspace();
 
-    for (const badDest of ['../escape.md', '/tmp/report.md', '.env', '.npmrc', '.ssh/id_rsa']) {
+    for (const badDest of [
+      '../escape.md',
+      '/tmp/report.md',
+      'C:\\report.md',
+      '.',
+      './',
+      '.env',
+      '.npmrc',
+      '.ssh/id_rsa',
+      'node_modules/report.md',
+      '.git/report.md',
+    ]) {
       await expect(
         exportReport({
           cwd: dir,
@@ -100,7 +111,7 @@ describe('exportReport', () => {
           approval: VALID_APPROVAL,
           securityValidated: true,
         }),
-      ).rejects.toThrow(SecurityBoundaryError);
+      ).rejects.toThrow(badDest === '.' || badDest === './' ? ExportError : SecurityBoundaryError);
     }
   });
 

@@ -83,23 +83,23 @@ A clean tarball (`bugbundle-cli-0.1.0.tgz`) was packed and installed into an iso
 ## 6. CI & Tooling Verification
 
 - `.github/workflows/ci.yml` triggers on `push` and `pull_request` to `main` with `permissions: contents: read`.
-- Uses SHA-pinned `actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683` (`v4.2.2`) and `actions/setup-node@39370e3970a6c05044800ad12f3067bab3b289d0` (`v4.1.0`).
-- Runs `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` across Node.js `22`, `24`, and `26` on `ubuntu-latest`.
+- Uses SHA-pinned `actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683` (`v4.2.2`) and `actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020` (`v4`).
+- Runs `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test` across `ubuntu-latest` (Node `22`, `24`, `26`), `windows-latest` (Node `22`, `26`), and `macos-latest` (Node `22`, `26`).
 - Contains no publish steps or secrets.
 
 ---
 
-## 7. Findings Summary (P0–P3)
+## 7. Findings Summary & Pre-Release Hardening Status (P0–P3)
 
-| Severity | ID        | Area                                           | Finding                                                                                                                                                                                                                     |
-| :------- | :-------- | :--------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P0**   | —         | Code / Security                                | None.                                                                                                                                                                                                                       |
-| **P1**   | —         | Code / Security                                | None. _(Operational note: repo has no git commits yet; maintainer must create the initial commit on `main` before pushing/publishing.)_                                                                                     |
-| **P2**   | `REL-001` | `package-lock.json`                            | `npm ci` reports `4` vulnerabilities (`1 moderate, 1 high, 2 critical`) in transitive devDependencies (not runtime dependencies `chalk`, `commander`, or `zod`). Consider auditing/updating devDependencies before tagging. |
-| **P2**   | `REL-002` | `.github/workflows/ci.yml`                     | CI runs on `ubuntu-latest` only; `windows-latest` and `macos-latest` are not in the matrix (Windows path/process behavior is currently covered by mocked unit tests).                                                       |
-| **P3**   | `REL-003` | `src/config/schema.ts` vs `report-exporter.ts` | `bugbundle.config.json` `report.filename` rejects `/` (`SafeRelativeFilenameSchema`), whereas CLI `--output ./sub/file.md` permits existing subdirectories.                                                                 |
-| **P3**   | `REL-004` | `src/cli/program.ts`                           | `--include` / `--exclude` flags apply to `collect` only, not `inspect`.                                                                                                                                                     |
-| **P3**   | `REL-005` | Repository Docs                                | `CONTRIBUTING.md` does not yet exist (noted in `README.md`).                                                                                                                                                                |
+| Severity | ID        | Area                                                     | Finding & Resolution Status                                                                                                                                                                                                                                                                   |
+| :------- | :-------- | :------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0**   | —         | Code / Security                                          | None.                                                                                                                                                                                                                                                                                         |
+| **P1**   | —         | Code / Security                                          | None. _(Operational note: repo has no git commits yet; maintainer must create the initial commit on `main` before pushing/publishing.)_                                                                                                                                                       |
+| **P2**   | `REL-001` | `package.json` / `package-lock.json`                     | **Resolved:** Upgraded `zod` (`^3.24.2` -> `^4.6.7`) and `vitest` (`^3.0.8` -> `^5.1.1`). Both `npm audit` and `npm audit --omit=dev` report `0` vulnerabilities.                                                                                                                             |
+| **P2**   | `REL-002` | `.github/workflows/ci.yml`                               | **Resolved in workflow:** Expanded CI matrix to `ubuntu-latest` (Node `22`, `24`, `26`), `windows-latest` (Node `22`, `26`), and `macos-latest` (Node `22`, `26`), with `npm run build` ordered before `npm test`. _(Remote Windows/macOS CI runs will execute upon initial push to `main`.)_ |
+| **P3**   | `REL-003` | `src/config/schema.ts` & `src/export/report-exporter.ts` | **Resolved:** Unified config `report.filename` and CLI `--output` validation on `validateExportDestination`, allowing safe relative subdirectory paths while preserving traversal, Windows drive-letter, restricted path, symlink, and no-overwrite protections.                              |
+| **P3**   | `REL-004` | `src/cli/program.ts`                                     | **Resolved:** Added `--include` and `--exclude` flags to `bugbundle inspect`, reusing `executeDiagnosticPipeline` / `resolveEffectiveCollectors` with config precedence and zero file writes preserved.                                                                                       |
+| **P3**   | `REL-005` | Repository Docs                                          | **Resolved:** Created [CONTRIBUTING.md](../CONTRIBUTING.md) and linked it from [README.md](../README.md).                                                                                                                                                                                     |
 
 ---
 
@@ -107,10 +107,9 @@ A clean tarball (`bugbundle-cli-0.1.0.tgz`) was packed and installed into an iso
 
 **Verdict: `READY FOR INITIAL RELEASE`**
 
-All Phase 1 requirements, security guardrails, CLI exit codes, strict TypeScript checks, 127 tests, build outputs, and clean tarball installation checks pass with zero P0/P1 defects.
+All Phase 1 requirements, pre-release hardening items (`REL-001`–`REL-005`), security guardrails, CLI exit codes, strict TypeScript checks, tests, build outputs, and clean tarball installation checks pass with zero P0/P1 defects and zero `npm audit` vulnerabilities.
 
-### Manual Maintainer Release Steps
+### Remaining Manual Maintainer Release Steps
 
-1. Create the initial git commit on `main` and push to `https://github.com/cipherX2433/bugbundle`.
+1. Create the initial git commit on `main` and push to `https://github.com/cipherX2433/bugbundle` (triggers the cross-platform GitHub Actions CI matrix on `ubuntu-latest`, `windows-latest`, and `macos-latest`).
 2. Verify npm account/package ownership for `bugbundle-cli` and run `npm publish` manually when ready.
-3. Optionally address P2/P3 items (`npm audit` on devDependencies, multi-OS CI matrix, `CONTRIBUTING.md`) in a follow-up maintenance commit.

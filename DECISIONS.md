@@ -140,3 +140,6 @@ This log tracks **confirmed product constraints** (`CONF-*`) and **numbered deci
   4. Apply CLI `--exclude` as a further restriction.
   5. Reject an empty final selection with `ConfigValidationError`.
 - **Rationale:** Allowing CLI flags only to narrow (never expand or re-enable) project-configured collector restrictions ensures team/maintainer config boundaries are respected and prevents silent empty reports.
+- **Pre-Release Hardening Update (`REL-003`, `REL-004`):**
+  - `bugbundle inspect` also supports `--include` and `--exclude` using the same `resolveEffectiveCollectors` precedence and zero-file-write guarantees.
+  - `bugbundle.config.json` `report.filename` and CLI `--output` share `validateExportDestination` for consistent relative path validation, traversal/symlink/drive-letter rejection, and existing-directory containment.

@@ -134,6 +134,28 @@ describe('bugbundle collect CLI flags (--output, --include, --exclude)', () => {
     expect(capture.getStdout()).toContain('Saved diagnostic report to ./reports/issue.md');
   });
 
+  it('supports equivalent relative subdirectory paths in bugbundle.config.json report.filename', async () => {
+    const dir = makeWorkspace();
+    mkdirSync(join(dir, 'reports'));
+    writeFileSync(
+      join(dir, CONFIG_FILENAME),
+      JSON.stringify({
+        report: { filename: './reports/from-config.md' },
+      }),
+    );
+
+    const capture = createCapturedIo();
+    const exitCode = await runCli(['node', 'bugbundle', 'collect', '--yes'], {
+      io: capture.io,
+      cwd: dir,
+      collectors: createMockCollectors(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(existsSync(join(dir, 'reports', 'from-config.md'))).toBe(true);
+    expect(capture.getStdout()).toContain('Saved diagnostic report to ./reports/from-config.md');
+  });
+
   it('rejects missing parent directory, traversal, symlink escape, restricted output, and existing target', async () => {
     const dir = makeWorkspace();
     const outside = makeWorkspace();

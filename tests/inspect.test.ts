@@ -300,4 +300,34 @@ describe('bugbundle inspect', () => {
     expect(exitCode).toBe(2);
     expect(capture.getStderr()).toContain('CONFIG_VALIDATION_ERROR');
   });
+
+  it('supports --include and --exclude flags while preserving config precedence and zero writes', async () => {
+    const dir = makeWorkspace();
+    writeFileSync(
+      join(dir, CONFIG_FILENAME),
+      JSON.stringify({
+        collectors: {
+          enabled: ['system', 'runtimes'],
+          excluded: ['dependencies'],
+        },
+      }),
+    );
+
+    const capture = createCapturedIo();
+    const exitCode = await runCli(
+      ['node', 'bugbundle', 'inspect', '--include', 'system,runtimes', '--exclude', 'runtimes'],
+      {
+        io: capture.io,
+        cwd: dir,
+        collectors: createMockCollectors(),
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    const out = capture.getStdout();
+    expect(out).toContain('| Platform | `linux` |');
+    expect(out).toContain('Runtime information was not collected.');
+    expect(out).toContain('Dependency information was not collected.');
+    expect(existsSync(join(dir, 'bugbundle-report.md'))).toBe(false);
+  });
 });

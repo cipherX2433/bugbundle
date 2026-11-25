@@ -14,9 +14,9 @@
   - **License & Runtime:** MIT, Node.js `>=22.0.0`, `npm`.
 - **Completed Artifacts:**
   - `src/` — `cli`, `collectors`, `config`, `core`, `errors` (`EXIT_CODES`), `export`, `report`, `review`, `security`, `types`
-  - `tests/` — 22 Vitest test files (127 tests)
-  - `eslint.config.mjs`, `.prettierrc.json`, `.prettierignore`, `.github/workflows/ci.yml` (Node `22`, `24`, `26` matrix)
-  - `README.md` — Grounded in actual CLI commands, flags, exit codes, Zod config schema, and security boundaries
+  - `tests/` — 22 Vitest test files (129 tests)
+  - `eslint.config.mjs`, `.prettierrc.json`, `.prettierignore`, `.github/workflows/ci.yml` (Ubuntu/Windows/macOS across Node `22`, `24`, `26`)
+  - `README.md` & `CONTRIBUTING.md` — Grounded in actual CLI commands, flags, exit codes, Zod config schema, and security boundaries
 
 ---
 
@@ -33,13 +33,13 @@
 - `npm run lint`: Passed
 - `npm run typecheck`: Passed
 - `npm run build`: Passed
-- `npm test`: 22 test files passed, 127 tests passed
+- `npm test`: 22 test files passed, 129 tests passed
+- `npm audit` / `npm audit --omit=dev`: 0 vulnerabilities
 - `npm pack --dry-run`: Verified clean tarball (`dist/`, `LICENSE`, `README.md`, `package.json`)
 
 ---
 
 ## 4. Remaining Release Actions (Manual Maintainer Steps)
 
-1. Create the initial git commit on `main` and push to `https://github.com/cipherX2433/bugbundle`.
+1. Create the initial git commit on `main` and push to `https://github.com/cipherX2433/bugbundle` (triggers the cross-platform GitHub Actions CI matrix).
 2. Confirm npm organization/package ownership and publish `bugbundle-cli` manually when ready (`npm publish` has **not** been run).
-3. Optionally address P2/P3 recommendations from [FINAL_RELEASE_AUDIT.md](./docs/FINAL_RELEASE_AUDIT.md) (devDependency audit, multi-OS CI matrix, `CONTRIBUTING.md`).

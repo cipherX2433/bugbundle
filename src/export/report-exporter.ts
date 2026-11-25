@@ -51,7 +51,7 @@ export function validateExportDestination(destinationPath: string): string {
   if (trimmed.length === 0) {
     throw new ExportError('Export destination path must not be empty.');
   }
-  if (isAbsolute(trimmed)) {
+  if (isAbsolute(trimmed) || /^[A-Za-z]:/.test(trimmed)) {
     throw new SecurityBoundaryError('Absolute export destination paths are not allowed.');
   }
   if (trimmed.includes('\0')) {
@@ -59,6 +59,9 @@ export function validateExportDestination(destinationPath: string): string {
   }
 
   const segments = trimmed.split(/[\\/]+/).filter(Boolean);
+  if (segments.length === 0 || segments.every((segment) => segment === '.')) {
+    throw new ExportError('Export destination must include a valid filename.');
+  }
   for (const segment of segments) {
     if (segment === '..') {
       throw new SecurityBoundaryError('Path traversal outside project directory is not allowed.');

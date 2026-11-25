@@ -344,7 +344,7 @@ npm run build
 
 ## Contributing
 
-Contribution guidelines (`CONTRIBUTING.md`) are currently being prepared. In the meantime, please review [AGENTS.md](./AGENTS.md), [ARCHITECTURE.md](./ARCHITECTURE.md), and [SECURITY.md](./SECURITY.md) before opening a pull request, and ensure `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` pass.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for prerequisites, local setup, PR expectations, and security reporting guidance. Before opening a pull request, please also review [AGENTS.md](./AGENTS.md), [ARCHITECTURE.md](./ARCHITECTURE.md), and [SECURITY.md](./SECURITY.md), and ensure `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test` pass.
 
 ---
 
