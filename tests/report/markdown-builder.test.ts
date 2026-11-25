@@ -320,4 +320,117 @@ describe('buildMarkdownReport', () => {
     const second = buildMarkdownReport(input);
     expect(first).toBe(second);
   });
+
+  it('does not double-count derived orchestrator warnings in Redactions Applied', () => {
+    const pipeline = new SecurityPipeline();
+
+    const warnings = [
+      'FAKE_PASSWORD=example_fake_password_8',
+      'APP_PASSWORD=example_app_password_6',
+      'USER_PASSWORD=example_user_password_7',
+      'DB_PASSWORD=example_db_password_9',
+      'API_SECRET=example',
+      'PASSWORD_POLICY=strict',
+    ];
+
+    const bundle: DiagnosticBundle = {
+      generatedAt: '2026-11-25T14:00:00.000Z',
+      cliVersion: '0.1.0',
+      warnings: warnings.map((w) => `[system] ${w}`),
+      results: [
+        {
+          id: 'system',
+          status: 'partial',
+          warnings,
+          durationMs: 2,
+          data: {
+            platform: 'darwin',
+            release: '24.6.0',
+            arch: 'arm64',
+            nodeVersion: 'v22.17.1',
+            cpu: { model: 'Apple M4', cores: 10 },
+          },
+        },
+      ],
+    };
+
+    const secured = pipeline.processValue(bundle);
+    const input = createReportInputFromPipeline(secured);
+    const markdown = buildMarkdownReport(input);
+
+    expect(secured.redactionCount).toBe(10);
+    expect(input.security?.redactionCount).toBe(5);
+    expect(markdown).toContain('| Redactions Applied | 5 |');
+    expect(markdown).toContain('| Collection Warnings | 6 |');
+    expect(markdown).toContain('PASSWORD\\_POLICY=strict');
+  });
+
+  it('counts distinct redactions across collector results and standalone warnings separately, and preserves zero', () => {
+    const pipeline = new SecurityPipeline();
+
+    const mixedBundle: DiagnosticBundle = {
+      generatedAt: '2026-11-25T14:00:00.000Z',
+      cliVersion: '0.1.0',
+      warnings: [
+        '[system] FAKE_PASSWORD=secretOne123',
+        'Standalone Authorization: Bearer standaloneBearer1234',
+      ],
+      results: [
+        {
+          id: 'system',
+          status: 'partial',
+          warnings: ['FAKE_PASSWORD=secretOne123'],
+          durationMs: 1,
+        },
+        {
+          id: 'runtimes',
+          status: 'partial',
+          warnings: ['Optional runtime missing'],
+          durationMs: 1,
+          data: {
+            detectedCount: 1,
+            missingOptionalCount: 0,
+            tools: [
+              {
+                id: 'node',
+                name: 'Node.js',
+                required: true,
+                status: 'detected',
+                warning: 'DB_PASSWORD=runtimeSecret456',
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const securedMixed = pipeline.processValue(mixedBundle);
+    const mixedInput = createReportInputFromPipeline(securedMixed);
+    const mixedMarkdown = buildMarkdownReport(mixedInput);
+
+    expect(mixedInput.security?.redactionCount).toBe(3);
+    expect(mixedMarkdown).toContain('| Redactions Applied | 3 |');
+
+    const cleanBundle: DiagnosticBundle = {
+      generatedAt: '2026-11-25T14:00:00.000Z',
+      cliVersion: '0.1.0',
+      warnings: ['[system] PASSWORD_POLICY=strict'],
+      results: [
+        {
+          id: 'system',
+          status: 'ok',
+          warnings: ['PASSWORD_POLICY=strict'],
+          durationMs: 1,
+        },
+      ],
+    };
+
+    const securedClean = pipeline.processValue(cleanBundle);
+    const cleanInput = createReportInputFromPipeline(securedClean);
+    const cleanMarkdown = buildMarkdownReport(cleanInput);
+
+    expect(cleanInput.security?.redactionCount).toBe(0);
+    expect(cleanMarkdown).toContain('| Redactions Applied | 0 |');
+    expect(cleanMarkdown).toContain('| Collection Warnings | 1 |');
+  });
 });

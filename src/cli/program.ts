@@ -24,6 +24,7 @@ import { exportReport, validateExportDestination } from '../export/index.js';
 import {
   buildMarkdownReport,
   createReportInputFromPipeline,
+  stripDerivedBundleWarnings,
   type MarkdownReportInput,
 } from '../report/index.js';
 import { runReviewGate, type PromptAdapter } from '../review/index.js';
@@ -104,6 +105,7 @@ async function executeDiagnosticPipeline(params: {
 }): Promise<{
   readonly loadedConfig: LoadedConfigResult;
   readonly secured: SecurityPipelineResult<DiagnosticBundle>;
+  readonly uniqueRedactionCount: number;
 }> {
   await assertValidProjectDirectory(params.targetCwd);
 
@@ -148,8 +150,12 @@ async function executeDiagnosticPipeline(params: {
       },
     });
   const secured = securityPipeline.processValue(rawBundle);
+  const uniqueRedactionCount =
+    secured.redactionCount > 0 && rawBundle.warnings.length > 0 && rawBundle.results.length > 0
+      ? securityPipeline.processValue(stripDerivedBundleWarnings(rawBundle)).redactionCount
+      : secured.redactionCount;
 
-  return { loadedConfig, secured };
+  return { loadedConfig, secured, uniqueRedactionCount };
 }
 
 function formatStatusIcon(status: CollectorStatus): string {
@@ -249,7 +255,7 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
           validateExportDestination(cmdOptions.output);
         }
 
-        const { loadedConfig, secured } = await executeDiagnosticPipeline({
+        const { loadedConfig, secured, uniqueRedactionCount } = await executeDiagnosticPipeline({
           targetCwd,
           collectors,
           version,
@@ -266,6 +272,7 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
         const reportInput = createReportInputFromPipeline(secured, {
           projectName: loadedConfig.config.projectName,
           includeWarnings: loadedConfig.config.report.includeWarnings,
+          redactionCount: uniqueRedactionCount,
         });
         const markdown = reportBuilder(reportInput);
 
@@ -328,7 +335,7 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
       writeLine(io.stdout, `${chalk.bold('bugbundle inspect')} ${chalk.dim(`(v${version})`)}`);
       writeLine(io.stdout, chalk.dim('Running local diagnostic collection and security checks...'));
 
-      const { loadedConfig, secured } = await executeDiagnosticPipeline({
+      const { loadedConfig, secured, uniqueRedactionCount } = await executeDiagnosticPipeline({
         targetCwd,
         collectors,
         version,
@@ -340,6 +347,7 @@ export function createProgram(options: CreateProgramOptions = {}): Command {
       const reportInput = createReportInputFromPipeline(secured, {
         projectName: loadedConfig.config.projectName,
         includeWarnings: loadedConfig.config.report.includeWarnings,
+        redactionCount: uniqueRedactionCount,
       });
       const markdown = reportBuilder(reportInput);
 

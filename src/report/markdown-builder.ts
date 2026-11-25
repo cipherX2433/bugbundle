@@ -1,5 +1,5 @@
 import { SecurityBoundaryError } from '../errors/index.js';
-import type { SecurityPipelineResult } from '../security/index.js';
+import { REDACTED_PLACEHOLDER, type SecurityPipelineResult } from '../security/index.js';
 import type {
   CollectorResult,
   DependenciesData,
@@ -329,20 +329,85 @@ function renderPrivacySection(input: MarkdownReportInput, warningCount: number):
   return lines;
 }
 
+/**
+ * Returns a shallow copy of `bundle` with top-level `warnings` entries that are
+ * exact `[collectorId] warning` copies of `results[].warnings` removed, so
+ * security redaction counting does not double-count derived orchestrator warnings.
+ */
+export function stripDerivedBundleWarnings(bundle: DiagnosticBundle): DiagnosticBundle {
+  const derivedCounts = new Map<string, number>();
+  for (const result of bundle.results) {
+    for (const warning of result.warnings) {
+      const derived = `[${result.id}] ${warning}`;
+      derivedCounts.set(derived, (derivedCounts.get(derived) ?? 0) + 1);
+    }
+  }
+
+  const remainingWarnings: string[] = [];
+  for (const warning of bundle.warnings) {
+    const count = derivedCounts.get(warning) ?? 0;
+    if (count > 0) {
+      derivedCounts.set(warning, count - 1);
+    } else {
+      remainingWarnings.push(warning);
+    }
+  }
+
+  return {
+    ...bundle,
+    warnings: remainingWarnings,
+  };
+}
+
+function countDuplicateDerivedWarningRedactions(bundle: DiagnosticBundle): number {
+  const derivedCounts = new Map<string, number>();
+  for (const result of bundle.results) {
+    for (const warning of result.warnings) {
+      const derived = `[${result.id}] ${warning}`;
+      derivedCounts.set(derived, (derivedCounts.get(derived) ?? 0) + 1);
+    }
+  }
+
+  let duplicateRedactions = 0;
+  for (const warning of bundle.warnings) {
+    const count = derivedCounts.get(warning) ?? 0;
+    if (count > 0) {
+      derivedCounts.set(warning, count - 1);
+      let index = warning.indexOf(REDACTED_PLACEHOLDER);
+      while (index !== -1) {
+        duplicateRedactions += 1;
+        index = warning.indexOf(REDACTED_PLACEHOLDER, index + REDACTED_PLACEHOLDER.length);
+      }
+    }
+  }
+
+  return duplicateRedactions;
+}
+
 export function createReportInputFromPipeline(
   secured: SecurityPipelineResult<DiagnosticBundle>,
   options: {
     readonly projectName?: string | undefined;
     readonly includeWarnings?: boolean | undefined;
+    readonly redactionCount?: number | undefined;
   } = {},
 ): MarkdownReportInput {
+  const redactionCount =
+    options.redactionCount !== undefined
+      ? options.redactionCount
+      : secured.redactionCount > 0 &&
+          secured.data.warnings.length > 0 &&
+          secured.data.results.length > 0
+        ? Math.max(0, secured.redactionCount - countDuplicateDerivedWarningRedactions(secured.data))
+        : secured.redactionCount;
+
   return {
     bundle: secured.data,
     projectName: options.projectName,
     includeWarnings: options.includeWarnings,
     security: {
       validated: secured.validation.valid,
-      redactionCount: secured.redactionCount,
+      redactionCount,
       pathReplacements: secured.pathStats.replacements,
     },
   };
