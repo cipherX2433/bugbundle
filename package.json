@@ -1,0 +1,67 @@
+{
+  "name": "bugbundle-cli",
+  "version": "0.1.0",
+  "description": "Open-source, local-first developer diagnostics CLI for Node.js",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherX2433/bugbundle.git"
+  },
+  "homepage": "https://github.com/cipherX2433/bugbundle#readme",
+  "bugs": {
+    "url": "https://github.com/cipherX2433/bugbundle/issues"
+  },
+  "keywords": [
+    "cli",
+    "diagnostics",
+    "bug-report",
+    "open-source",
+    "local-first",
+    "nodejs",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "bugbundle": "./dist/cli/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.13.10",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.10.1",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^3.0.8"
+  }
+}
