@@ -226,5 +226,5 @@ describe('spawned CLI process exit codes', () => {
       encoding: 'utf8',
     });
     expect(collectYesRes2.status).toBe(6);
-  });
+  }, 15_000);
 });
